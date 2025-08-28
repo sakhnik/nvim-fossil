@@ -59,8 +59,8 @@ local function run_fossil(args)
         return
       end
       local name = spinner_frames[spinner_index] .. " Running: fossil " .. table.concat(args, " ")
-      pcall(vim.api.nvim_buf_set_name, buf, name)
-      --vim.api.nvim_win_set_option(win, "winbar", name)
+      --pcall(vim.api.nvim_buf_set_name, buf, name)
+      vim.wo[win].winbar = name
       spinner_index = (spinner_index % #spinner_frames) + 1
     end))
   end
@@ -72,8 +72,8 @@ local function run_fossil(args)
       spinner_timer = nil
       if vim.api.nvim_win_is_valid(win) then
         local name = "✓ fossil " .. table.concat(args, " ")
-        --vim.api.nvim_win_set_option(win, "winbar", name)
-        pcall(vim.api.nvim_buf_set_name, buf, name)
+        vim.wo[win].winbar = name
+        --pcall(vim.api.nvim_buf_set_name, buf, name)
       end
     end
   end
