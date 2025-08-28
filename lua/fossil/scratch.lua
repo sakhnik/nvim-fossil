@@ -1,13 +1,23 @@
+---@class Scratch
+---@field private args string[]
+---@field private buf integer
+---@field private win integer
+---@field private spinner_index integer
+---@field private spinner_timer userdata
 local M = {}
 M.__index = M
 
 local spinner_frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" }
 
+---Create new scratch object
 function M.create()
   local self = {}
   return setmetatable(self, M)
 end
 
+---Open a new scratch window
+---@param args string[]
+---@param on_done fun()
 function M:open(args, on_done)
   self.args = args
   local subcmd = self.args[1]
@@ -39,6 +49,8 @@ function M:open(args, on_done)
   })
 end
 
+---Append lines to the scratch buffer
+---@param lines string[]
 function M:append_lines(lines)
   if #lines > 0 and vim.api.nvim_buf_is_valid(self.buf) then
     vim.bo[self.buf].modifiable = true
@@ -47,6 +59,7 @@ function M:append_lines(lines)
   end
 end
 
+---Start spinner
 function M:start_spinner()
   self.spinner_timer = vim.loop.new_timer()
   self.spinner_timer:start(0, 100, vim.schedule_wrap(function()
@@ -63,6 +76,7 @@ function M:start_spinner()
   end))
 end
 
+---Stop spinner
 function M:stop_spinner()
   if self.spinner_timer then
     self.spinner_timer:stop()
