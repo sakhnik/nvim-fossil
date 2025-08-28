@@ -29,15 +29,23 @@ local function run_fossil(args)
 
   local job_id
   local scratch = require'fossil.scratch'.create()
+  local scratch_opened = false
 
-  scratch:open(args, function()
-    if job_id then
-      vim.fn.jobstop(job_id)
-      scratch:stop_spinner()
-      vim.notify("Fossil job killed because buffer was closed", vim.log.levels.WARN)
-      job_id = nil
+  local function ensure_scratch_opened()
+    if scratch_opened then
+      return
     end
-  end)
+    scratch_opened = true
+    scratch:open(args, function()
+      if job_id then
+        vim.print("!!! kill")
+        vim.fn.jobstop(job_id)
+        scratch:stop_spinner()
+        vim.notify("Fossil job killed because buffer was closed", vim.log.levels.WARN)
+        job_id = nil
+      end
+    end)
+  end
 
   job_id = vim.fn.jobstart(cmd, {
     env = { EDITOR = fossil_editor },
@@ -49,6 +57,8 @@ local function run_fossil(args)
       for _, l in ipairs(data) do
         if l ~= "" then table.insert(clean, l) end
       end
+
+      ensure_scratch_opened()
       scratch:append_lines(clean)
     end,
     on_stderr = function(_, data, _)
@@ -63,9 +73,12 @@ local function run_fossil(args)
       end
     end,
     on_exit = function()
+      ensure_scratch_opened()
       vim.schedule(function() scratch:stop_spinner() end)
-      vim.fn.jobstop(job_id)
-      job_id = nil
+      if job_id then
+        vim.fn.jobstop(job_id)
+        job_id = nil
+      end
     end,
   })
 

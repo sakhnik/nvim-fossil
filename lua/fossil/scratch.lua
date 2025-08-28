@@ -50,14 +50,16 @@ end
 function M:start_spinner()
   self.spinner_timer = vim.loop.new_timer()
   self.spinner_timer:start(0, 100, vim.schedule_wrap(function()
-    if not vim.api.nvim_win_is_valid(self.win) then
-      self.spinner_timer:stop()
-      return
+    if self.win then
+      if not vim.api.nvim_win_is_valid(self.win) then
+        self.spinner_timer:stop()
+        return
+      end
+      local name = spinner_frames[self.spinner_index] .. " Running: fossil " .. table.concat(self.args, " ")
+      --pcall(vim.api.nvim_buf_set_name, buf, name)
+      vim.wo[self.win].winbar = name
+      self.spinner_index = (self.spinner_index % #spinner_frames) + 1
     end
-    local name = spinner_frames[self.spinner_index] .. " Running: fossil " .. table.concat(self.args, " ")
-    --pcall(vim.api.nvim_buf_set_name, buf, name)
-    vim.wo[self.win].winbar = name
-    self.spinner_index = (self.spinner_index % #spinner_frames) + 1
   end))
 end
 
@@ -66,7 +68,7 @@ function M:stop_spinner()
     self.spinner_timer:stop()
     self.spinner_timer:close()
     self.spinner_timer = nil
-    if vim.api.nvim_win_is_valid(self.win) then
+    if self.win and vim.api.nvim_win_is_valid(self.win) then
       local name = "✓ fossil " .. table.concat(self.args, " ")
       vim.wo[self.win].winbar = name
       --pcall(vim.api.nvim_buf_set_name, buf, name)
