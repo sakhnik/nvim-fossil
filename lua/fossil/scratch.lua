@@ -42,6 +42,8 @@ function M:open(args, on_done)
   self.win = vim.api.nvim_get_current_win()
   self.spinner_index = 1
 
+  pcall(vim.api.nvim_buf_set_name, self.buf, "fossil " .. table.concat(self.args, " "))
+
   vim.api.nvim_create_autocmd("BufWipeout", {
     buffer = self.buf,
     once = true,
@@ -68,9 +70,7 @@ function M:start_spinner()
         self.spinner_timer:stop()
         return
       end
-      local name = spinner_frames[self.spinner_index] .. " Running: fossil " .. table.concat(self.args, " ")
-      --pcall(vim.api.nvim_buf_set_name, buf, name)
-      vim.wo[self.win].winbar = name
+      vim.wo[self.win].winbar = spinner_frames[self.spinner_index] .. " Running"
       self.spinner_index = (self.spinner_index % #spinner_frames) + 1
     end
   end))
@@ -83,9 +83,14 @@ function M:stop_spinner()
     self.spinner_timer:close()
     self.spinner_timer = nil
     if self.win and vim.api.nvim_win_is_valid(self.win) then
-      local name = "✓ fossil " .. table.concat(self.args, " ")
-      vim.wo[self.win].winbar = name
-      --pcall(vim.api.nvim_buf_set_name, buf, name)
+      vim.wo[self.win].winbar = nil
+
+      -- Close automatically if empty
+      local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
+      local is_empty = (#lines == 0) or (#lines == 1 and lines[1] == "")
+      if is_empty then
+        vim.api.nvim_win_close(self.win, true)
+      end
     end
   end
 end
