@@ -1,12 +1,12 @@
 local M = {}
 
-local fossil_editor = require'fossil.editor'
+local editor = require'cli-wrap.editor'
 
 local function run_fossil(args)
   local cmd = vim.list_extend({ "fossil" }, args)
 
   local job_id
-  local scratch = require'fossil.scratch'.create()
+  local scratch = require'cli-wrap.scratch'.create()
   local scratch_opened = false
 
   local function ensure_scratch_opened()
@@ -25,7 +25,7 @@ local function run_fossil(args)
   end
 
   job_id = vim.fn.jobstart(cmd, {
-    env = { EDITOR = fossil_editor.sh },
+    env = { EDITOR = editor.sh },
     stdout_buffered = false,
     stderr_buffered = false,
     on_stdout = function(_, data, _)
@@ -41,7 +41,7 @@ local function run_fossil(args)
     on_stderr = function(_, data, _)
       if data and #data > 0 and data[1] ~= "" then
         for _, line in ipairs(data) do
-          fossil_editor.check(line)
+          editor.check(line)
         end
         vim.notify(table.concat(data, "\n"), vim.log.levels.ERROR)
       end
