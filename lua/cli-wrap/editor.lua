@@ -4,7 +4,7 @@ M.__index = M
 local this_dir = debug.getinfo(1, "S").source:match("@(.*/)")
 M.sh = this_dir .. "../../scripts/editor.sh"
 
-local function open_fossil_editor_buffer(tempfile)
+local function open_editor_buffer(tempfile)
     local buf = vim.fn.bufadd(tempfile)
     vim.fn.bufload(buf)
 
@@ -15,20 +15,21 @@ local function open_fossil_editor_buffer(tempfile)
     -- Set buffer options
     vim.bo[buf].buftype = ''  -- normal file buffer
     vim.bo[buf].swapfile = false
+    -- TODO: make customizable
     vim.bo[buf].filetype = 'fossilcommit'
 
     vim.api.nvim_create_autocmd({"BufWipeout", "BufUnload"}, {
       buffer = buf,
       callback = function()
-        os.remove('/tmp/nvim-fossil.edit')
+        os.remove('/tmp/nvim-cli-wrap.edit')
       end
     })
 end
 
 function M.check(line)
-  local tempfile = line:match("fossil:edit;([^\007]*)")
+  local tempfile = line:match("nvim%-cli%-wrap:edit;([^\007]*)")
   if tempfile then
-    open_fossil_editor_buffer(tempfile)
+    open_editor_buffer(tempfile)
   end
 end
 
